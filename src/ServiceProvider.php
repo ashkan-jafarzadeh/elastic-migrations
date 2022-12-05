@@ -1,24 +1,37 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations;
+namespace ElasticMigrations;
 
-use Elastic\Migrations\Adapters\IndexManagerAdapter;
-use Elastic\Migrations\Console\FreshCommand;
-use Elastic\Migrations\Console\MakeCommand;
-use Elastic\Migrations\Console\MigrateCommand;
-use Elastic\Migrations\Console\RefreshCommand;
-use Elastic\Migrations\Console\ResetCommand;
-use Elastic\Migrations\Console\RollbackCommand;
-use Elastic\Migrations\Console\StatusCommand;
-use Elastic\Migrations\Filesystem\MigrationStorage;
+use ElasticMigrations\Adapters\IndexManagerAdapter;
+use ElasticMigrations\Console\FreshCommand;
+use ElasticMigrations\Console\MakeCommand;
+use ElasticMigrations\Console\MigrateCommand;
+use ElasticMigrations\Console\RefreshCommand;
+use ElasticMigrations\Console\ResetCommand;
+use ElasticMigrations\Console\RollbackCommand;
+use ElasticMigrations\Console\StatusCommand;
 use Illuminate\Support\ServiceProvider as AbstractServiceProvider;
 
 final class ServiceProvider extends AbstractServiceProvider
 {
-    private string $configPath;
-    private string $migrationsPath;
-
-    private array $commands = [
+    /**
+     * @var string
+     */
+    private $configPath;
+    /**
+     * @var string
+     */
+    private $migrationsPath;
+    /**
+     * @var array
+     */
+    public $bindings = [
+        IndexManagerInterface::class => IndexManagerAdapter::class,
+    ];
+    /**
+     * @var array
+     */
+    private $commands = [
         MakeCommand::class,
         MigrateCommand::class,
         RefreshCommand::class,
@@ -48,9 +61,6 @@ final class ServiceProvider extends AbstractServiceProvider
             $this->configPath,
             basename($this->configPath, '.php')
         );
-
-        $this->app->singletonIf(MigrationStorage::class);
-        $this->app->bindIf(IndexManagerInterface::class, IndexManagerAdapter::class);
     }
 
     /**

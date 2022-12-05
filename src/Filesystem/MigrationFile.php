@@ -1,24 +1,25 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Filesystem;
+namespace ElasticMigrations\Filesystem;
 
 class MigrationFile
 {
-    public const FILE_EXTENSION = '.php';
-
-    protected string $filePath;
+    /**
+     * @var string
+     */
+    private $filePath;
 
     public function __construct(string $filePath)
     {
         $this->filePath = $filePath;
     }
 
-    public function name(): string
+    public function getName(): string
     {
-        return basename($this->filePath, static::FILE_EXTENSION);
+        return basename($this->filePath, '.php');
     }
 
-    public function path(): string
+    public function getPath(): string
     {
         return $this->filePath;
     }

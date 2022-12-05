@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Console;
+namespace ElasticMigrations\Console;
 
-use Elastic\Migrations\Migrator;
+use ElasticMigrations\Migrator;
 use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 
@@ -14,12 +14,12 @@ class RollbackCommand extends Command
      * @var string
      */
     protected $signature = 'elastic:migrate:rollback 
-        {name? : Name of the migration or a full path to the existing migration file.}
-        {--force : Force the operation to run when in production.}';
+        {fileName? : The name of the migration file}
+        {--force : Force the operation to run when in production}';
     /**
      * @var string
      */
-    protected $description = 'Rollback migrations.';
+    protected $description = 'Rollback migrations';
 
     public function handle(Migrator $migrator): int
     {
@@ -29,11 +29,8 @@ class RollbackCommand extends Command
             return 1;
         }
 
-        /** @var ?string $name */
-        $name = $this->argument('name');
-
-        if (isset($name)) {
-            $migrator->rollbackOne(trim($name));
+        if ($fileName = $this->argument('fileName')) {
+            $migrator->rollbackOne($fileName);
         } else {
             $migrator->rollbackLastBatch();
         }

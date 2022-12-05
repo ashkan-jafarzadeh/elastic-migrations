@@ -1,90 +1,190 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Filesystem;
+namespace ElasticMigrations\Filesystem;
 
-use const DIRECTORY_SEPARATOR;
-use Elastic\Migrations\ReadinessInterface;
+use ElasticMigrations\Exceptions\ModularHandleNotDefined;
+use ElasticMigrations\ModuleHandlerInterface;
+use ElasticMigrations\ReadinessInterface;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class MigrationStorage implements ReadinessInterface
 {
-    protected const DIRECTORY_PERMISSIONS = 0755;
+    /**
+     * @var Filesystem
+     */
+    private $filesystem;
 
-    protected Filesystem $filesystem;
-    protected string $defaultPath;
-    protected Collection $paths;
+    /**
+     * @var string
+     */
+    private $module;
+
+    /**
+     * @var ModuleHandlerInterface
+     */
+    private $module_handler;
+
+
 
     public function __construct(Filesystem $filesystem)
     {
-        $this->filesystem = $filesystem;
-        $this->defaultPath = config('elastic.migrations.storage.default_path', '');
-        $this->paths = collect([$this->defaultPath]);
+        $this->filesystem     = $filesystem;
+        $this->module_handler = $this->resolveModuleHandler();
     }
 
-    public function create(string $fileName, string $content): MigrationFile
+
+
+    public function setModule($module): MigrationStorage
     {
-        if ($this->isPath($fileName)) {
-            $this->filesystem->put($fileName, $content);
-            return new MigrationFile($fileName);
-        }
+        $this->module = Str::studly($module);
 
-        if (!$this->filesystem->isDirectory($this->defaultPath)) {
-            $this->filesystem->makeDirectory($this->defaultPath, static::DIRECTORY_PERMISSIONS, true);
-        }
-
-        $filePath = $this->makeFilePath($this->defaultPath, $fileName);
-        $this->filesystem->put($filePath, $content);
-        return new MigrationFile($filePath);
-    }
-
-    public function whereName(string $fileName): ?MigrationFile
-    {
-        if ($this->isPath($fileName)) {
-            return $this->filesystem->exists($fileName) ? new MigrationFile($fileName) : null;
-        }
-
-        foreach ($this->paths as $path) {
-            $filePath = $this->makeFilePath($path, $fileName);
-
-            if ($this->filesystem->exists($filePath)) {
-                return new MigrationFile($filePath);
-            }
-        }
-
-        return null;
-    }
-
-    public function all(): Collection
-    {
-        return $this->paths->flatMap(
-            fn (string $path) => $this->filesystem->glob($path . '/*_*' . MigrationFile::FILE_EXTENSION)
-        )->filter()->mapWithKeys(
-            static function (string $filePath) {
-                $file = new MigrationFile($filePath);
-                return [$file->name() => $file];
-            }
-        )->sortKeys()->values();
-    }
-
-    public function registerPaths(array $paths): self
-    {
-        $this->paths = $this->paths->merge($paths)->filter()->unique()->values();
         return $this;
     }
 
+
+
+    public function create(string $fileName, string $content): MigrationFile
+    {
+        if (!$this->filesystem->isDirectory($this->getModulePath())) {
+            $this->filesystem->makeDirectory($this->getModulePath(), 0755, true);
+        }
+
+        $filePath = $this->resolvePath($fileName);
+        $this->filesystem->put($filePath, $content);
+
+        return new MigrationFile($filePath);
+    }
+
+
+
+    public function findByName(string $fileName): ?MigrationFile
+    {
+        $filePath = $this->resolvePath($fileName);
+
+        return $this->filesystem->exists($filePath) ? new MigrationFile($filePath) : null;
+    }
+
+
+
+    public function findAll(): Collection
+    {
+        $files = [];
+
+        foreach ($this->getPaths() as $path) {
+            $files = array_merge($files, $this->filesystem->glob($path . '/*_*.php'));
+        }
+
+        return collect($files)->sort()->map(static function (string $filePath) {
+            return new MigrationFile($filePath);
+        })
+        ;
+    }
+
+
+
+    private function resolvePath(string $fileName): string
+    {
+        foreach ($this->getPaths() as $path) {
+            $path = $path . "/" . str_replace('.php', '', trim($fileName)) . ".php";
+            if (File::exists($path)) {
+                return $path;
+            }
+        }
+
+        return sprintf('%s/%s.php', $this->getModulePath(), str_replace('.php', '', trim($fileName)));
+    }
+
+
+
     public function isReady(): bool
     {
-        return $this->filesystem->isDirectory($this->defaultPath);
+        return $this->filesystem->isDirectory($this->getKernelPath());
     }
 
-    private function isPath(string $path): bool
+
+
+    /**
+     * get migration paths, based on the given module name.
+     *
+     * @return array
+     */
+    private function getPaths(): array
     {
-        return strpos($path, DIRECTORY_SEPARATOR) !== false;
+        // Kernel Only...
+        if ($this->module == "kernel") {
+            return (array)$this->getKernelPath();
+        }
+
+        // One Module Only...
+        if ($this->module and $this->module != "all") {
+            return [$this->getModulePath()];
+        }
+
+        // All Modules...
+        $array = (array)$this->getKernelPath();
+
+        foreach ($this->module_handler->list() as $module) {
+            $this->module = $module;
+            $array[]      = $this->getModulePath();
+        }
+
+        $this->module = null;
+        return $array;
     }
 
-    private function makeFilePath(string $path, string $fileName): string
+
+
+    /**
+     * get kernel path.
+     *
+     * @return string
+     */
+    private function getKernelPath(): string
     {
-        return $path . DIRECTORY_SEPARATOR . $fileName . MigrationFile::FILE_EXTENSION;
+        return config('elastic.migrations.storage_directory', '');
+    }
+
+
+
+    /**
+     * get module migrations path.
+     *
+     * @return string
+     */
+    private function getModulePath(): ?string
+    {
+        if (!$this->module){
+            return $this->getKernelPath();
+        }
+
+        if (!$this->module_handler->isValid($this->module)) {
+            $this->error("Module $this->module does not exist.");
+            return null;
+        }
+
+        return $this->module_handler->getPath($this->module,
+             rtrim(config('modules.directories.elastic_migrations', ''), '/'));
+    }
+
+
+
+    /**
+     * @throws ModularHandleNotDefined
+     */
+    private function resolveModuleHandler()
+    {
+        $handler = config("elastic.migrations.module_handler");
+        if (class_exists($handler)) {
+            $module_handler = new $handler();
+
+            if ($module_handler instanceof ModuleHandlerInterface) {
+                return $module_handler;
+            }
+        }
+
+        throw new ModularHandleNotDefined("ModularHandler is not valid. It should implemented the ModuleHandlerInterface");
     }
 }

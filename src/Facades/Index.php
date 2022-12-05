@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Facades;
+namespace ElasticMigrations\Facades;
 
-use Elastic\Migrations\IndexManagerInterface;
+use ElasticMigrations\IndexManagerInterface;
 use Illuminate\Support\Facades\Facade;
 
 /**
@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\Facade;
  * @method static self dropIfExists(string $indexName)
  * @method static self putAlias(string $indexName, string $aliasName, array $filter = null)
  * @method static self deleteAlias(string $indexName, string $aliasName)
- * @method static self connection(string $connection)
  */
 final class Index extends Facade
 {

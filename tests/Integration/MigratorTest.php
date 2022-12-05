@@ -1,10 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Tests\Integration;
+namespace ElasticMigrations\Tests\Integration;
 
-use Elastic\Migrations\Facades\Index;
-use Elastic\Migrations\Filesystem\MigrationStorage;
-use Elastic\Migrations\Migrator;
+use ElasticMigrations\Facades\Index;
+use ElasticMigrations\Migrator;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -12,21 +11,30 @@ use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
- * @covers \Elastic\Migrations\Migrator
+ * @covers \ElasticMigrations\Migrator
  */
 final class MigratorTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $table;
-    private MockObject $output;
-    private Migrator $migrator;
+    /**
+     * @var string
+     */
+    private $table;
+    /**
+     * @var MockObject
+     */
+    private $output;
+    /**
+     * @var Migrator
+     */
+    private $migrator;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->table = $this->config->get('elastic.migrations.database.table');
+        $this->table = config('elastic.migrations.table');
         $this->output = $this->createMock(OutputStyle::class);
         $this->migrator = resolve(Migrator::class)->setOutput($this->output);
 
@@ -75,19 +83,19 @@ final class MigratorTest extends TestCase
     public function test_all_migrations_can_not_be_executed_if_directory_is_empty(): void
     {
         // create a temporary empty directory and reconfigure the package to use it
-        $tmpDirectory = $this->config->get('elastic.migrations.storage.default_path') . '/tmp';
-        @mkdir($tmpDirectory);
-        $this->config->set('elastic.migrations.storage.default_path', $tmpDirectory);
+        $tmpDirectory = config('elastic.migrations.storage_directory') . '/tmp';
 
-        // create a new instance to apply the new config
-        $this->app->forgetInstance(MigrationStorage::class);
-        $migrator = resolve(Migrator::class)->setOutput($this->output);
+        @mkdir($tmpDirectory);
+        $this->app['config']->set('elastic.migrations.storage_directory', $tmpDirectory);
 
         // check that there is nothing to migrate
         $this->output
             ->expects($this->once())
             ->method('writeln')
             ->with('<info>Nothing to migrate</info>');
+
+        // create a new instance to apply the new config
+        $migrator = resolve(Migrator::class)->setOutput($this->output);
 
         $this->assertSame($migrator, $migrator->migrateAll());
 
@@ -306,16 +314,15 @@ final class MigratorTest extends TestCase
 
     public function test_migrator_is_not_ready_when_storage_is_not_ready(): void
     {
-        $this->config->set('elastic.migrations.storage.default_path', '/non_existing_directory');
-
-        // create a new instance to apply the new config
-        $this->app->forgetInstance(MigrationStorage::class);
-        $migrator = $this->app->make(Migrator::class)->setOutput($this->output);
+        $this->app['config']->set('elastic.migrations.storage_directory', '/non_existing_directory');
 
         $this->output
             ->expects($this->once())
             ->method('writeln')
-            ->with('<error>Default migration path is not yet created</error>');
+            ->with('<error>Migration directory is not yet created</error>');
+
+        // create a new instance to apply the new config
+        $migrator = resolve(Migrator::class)->setOutput($this->output);
 
         $this->assertFalse($migrator->isReady());
     }

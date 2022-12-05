@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations;
+namespace ElasticMigrations;
 
 interface IndexManagerInterface
 {
@@ -27,6 +27,4 @@ interface IndexManagerInterface
     public function drop(string $indexName): self;
 
     public function dropIfExists(string $indexName): self;
-
-    public function connection(string $connection): self;
 }

@@ -1,18 +1,22 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Adapters;
+namespace ElasticMigrations\Adapters;
 
-use Elastic\Adapter\Indices\Index;
-use Elastic\Adapter\Indices\IndexManager;
-use Elastic\Adapter\Indices\Mapping;
-use Elastic\Adapter\Indices\Settings;
-use Elastic\Migrations\IndexManagerInterface;
-use function Elastic\Migrations\prefix_alias_name;
-use function Elastic\Migrations\prefix_index_name;
+use ElasticAdapter\Indices\Alias;
+use ElasticAdapter\Indices\IndexBlueprint;
+use ElasticAdapter\Indices\IndexManager;
+use ElasticAdapter\Indices\Mapping;
+use ElasticAdapter\Indices\Settings;
+use ElasticMigrations\IndexManagerInterface;
+use function ElasticMigrations\prefix_alias_name;
+use function ElasticMigrations\prefix_index_name;
 
 class IndexManagerAdapter implements IndexManagerInterface
 {
-    private IndexManager $indexManager;
+    /**
+     * @var IndexManager
+     */
+    private $indexManager;
 
     public function __construct(IndexManager $indexManager)
     {
@@ -29,9 +33,9 @@ class IndexManagerAdapter implements IndexManagerInterface
 
             $modifier($mapping, $settings);
 
-            $index = new Index($prefixedIndexName, $mapping, $settings);
+            $index = new IndexBlueprint($prefixedIndexName, $mapping, $settings);
         } else {
-            $index = new Index($prefixedIndexName);
+            $index = new IndexBlueprint($prefixedIndexName);
         }
 
         $this->indexManager->create($index);
@@ -157,12 +161,12 @@ class IndexManagerAdapter implements IndexManagerInterface
         return $this;
     }
 
-    public function putAlias(string $indexName, string $aliasName, array $settings = null): IndexManagerInterface
+    public function putAlias(string $indexName, string $aliasName, array $filter = null): IndexManagerInterface
     {
         $prefixedIndexName = prefix_index_name($indexName);
         $prefixedAliasName = prefix_alias_name($aliasName);
 
-        $this->indexManager->putAliasRaw($prefixedIndexName, $prefixedAliasName, $settings);
+        $this->indexManager->putAlias($prefixedIndexName, new Alias($prefixedAliasName, $filter));
 
         return $this;
     }
@@ -175,12 +179,5 @@ class IndexManagerAdapter implements IndexManagerInterface
         $this->indexManager->deleteAlias($prefixedIndexName, $prefixedAliasName);
 
         return $this;
-    }
-
-    public function connection(string $connection): IndexManagerInterface
-    {
-        $self = clone $this;
-        $self->indexManager = $self->indexManager->connection($connection);
-        return $self;
     }
 }

@@ -1,21 +1,27 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Tests\Integration\Console;
+namespace ElasticMigrations\Tests\Integration\Console;
 
-use Elastic\Migrations\Console\MigrateCommand;
-use Elastic\Migrations\Migrator;
-use Elastic\Migrations\Tests\Integration\TestCase;
+use ElasticMigrations\Console\MigrateCommand;
+use ElasticMigrations\Migrator;
+use ElasticMigrations\Tests\Integration\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 
 /**
- * @covers \Elastic\Migrations\Console\MigrateCommand
+ * @covers \ElasticMigrations\Console\MigrateCommand
  */
 final class MigrateCommandTest extends TestCase
 {
-    private MockObject $migrator;
-    private MigrateCommand $command;
+    /**
+     * @var MockObject
+     */
+    private $migrator;
+    /**
+     * @var MigrateCommand
+     */
+    private $command;
 
     protected function setUp(): void
     {
@@ -64,7 +70,7 @@ final class MigrateCommandTest extends TestCase
             ->with('test_file_name');
 
         $result = $this->command->run(
-            new ArrayInput(['--force' => true, 'name' => 'test_file_name']),
+            new ArrayInput(['--force' => true, 'fileName' => 'test_file_name']),
             new NullOutput()
         );
 

@@ -1,28 +1,34 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Tests\Integration\Repositories;
+namespace ElasticMigrations\Tests\Integration\Repositories;
 
-use Elastic\Migrations\Repositories\MigrationRepository;
-use Elastic\Migrations\Tests\Integration\TestCase;
+use ElasticMigrations\Repositories\MigrationRepository;
+use ElasticMigrations\Tests\Integration\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * @covers \Elastic\Migrations\Repositories\MigrationRepository
+ * @covers \ElasticMigrations\Repositories\MigrationRepository
  */
 final class MigrationRepositoryTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $table;
-    private MigrationRepository $migrationRepository;
+    /**
+     * @var string
+     */
+    private $table;
+    /**
+     * @var MigrationRepository
+     */
+    private $migrationRepository;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->table = $this->config->get('elastic.migrations.database.table');
+        $this->table = config('elastic.migrations.table');
 
         // create fixtures
         DB::table($this->table)->insert([
@@ -59,10 +65,10 @@ final class MigrationRepositoryTest extends TestCase
         );
     }
 
-    public function test_all_records_can_be_retrieved(): void
+    public function test_all_records_can_be_received(): void
     {
         $this->assertSame(
-            $this->migrationRepository->all()->toArray(),
+            $this->migrationRepository->getAll()->toArray(),
             [
                 '2019_08_10_142230_update_test_index_mapping',
                 '2018_12_01_081000_create_test_index',
@@ -70,18 +76,18 @@ final class MigrationRepositoryTest extends TestCase
         );
     }
 
-    public function test_last_batch_number_can_be_retrieved(): void
+    public function test_last_batch_number_can_be_received(): void
     {
-        $this->assertSame(2, $this->migrationRepository->lastBatchNumber());
+        $this->assertSame(2, $this->migrationRepository->getLastBatchNumber());
 
         DB::table($this->table)->delete();
-        $this->assertNull($this->migrationRepository->lastBatchNumber());
+        $this->assertNull($this->migrationRepository->getLastBatchNumber());
     }
 
-    public function test_last_record_batch_can_be_retrieved(): void
+    public function test_last_record_batch_can_be_received(): void
     {
         $this->assertSame(
-            $this->migrationRepository->lastBatch()->toArray(),
+            $this->migrationRepository->getLastBatch()->toArray(),
             [
                 '2019_08_10_142230_update_test_index_mapping',
             ]
@@ -102,10 +108,10 @@ final class MigrationRepositoryTest extends TestCase
 
     public function test_repository_can_delete_all_records(): void
     {
-        $this->assertCount(2, $this->migrationRepository->all());
+        $this->assertCount(2, $this->migrationRepository->getAll());
 
-        $this->migrationRepository->purge();
+        $this->migrationRepository->deleteAll();
 
-        $this->assertCount(0, $this->migrationRepository->all());
+        $this->assertCount(0, $this->migrationRepository->getAll());
     }
 }

@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Tests\Unit\Filesystem;
+namespace ElasticMigrations\Tests\Unit\Filesystem;
 
-use Elastic\Migrations\Filesystem\MigrationFile;
+use ElasticMigrations\Filesystem\MigrationFile;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \Elastic\Migrations\Filesystem\MigrationFile
+ * @covers \ElasticMigrations\Filesystem\MigrationFile
  */
 final class MigrationFileTest extends TestCase
 {
@@ -15,16 +15,16 @@ final class MigrationFileTest extends TestCase
     public function test_path_getter(): void
     {
         $this->assertSame(
-            self::FULL_PATH,
-            (new MigrationFile(self::FULL_PATH))->path()
+            static::FULL_PATH,
+            (new MigrationFile(static::FULL_PATH))->getPath()
         );
     }
 
     public function test_name_getter(): void
     {
         $this->assertSame(
-            basename(self::FULL_PATH, MigrationFile::FILE_EXTENSION),
-            (new MigrationFile(self::FULL_PATH))->name()
+            basename(static::FULL_PATH, '.php'),
+            (new MigrationFile(static::FULL_PATH))->getName()
         );
     }
 }

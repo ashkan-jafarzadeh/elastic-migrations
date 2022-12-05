@@ -4,8 +4,6 @@ includes:
 parameters:
   level: max
   checkMissingIterableValueType: false
-  checkGenericClassInNonGenericObjectType: false
   paths:
     - src
-  ignoreErrors:
-    - '#Parameter .+? of method Illuminate\\Support\\Collection<.+?>::.+?\(\) expects .+? given#'
+    - tests

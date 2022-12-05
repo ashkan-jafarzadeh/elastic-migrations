@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Repositories;
+namespace ElasticMigrations\Repositories;
 
-use Elastic\Migrations\ReadinessInterface;
+use ElasticMigrations\ReadinessInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -11,20 +11,26 @@ use stdClass;
 
 class MigrationRepository implements ReadinessInterface
 {
-    private string $table;
-    private ?string $connection;
+    /**
+     * @var string
+     */
+    private $table;
+    /**
+     * @var string
+     */
+    private $connection;
 
     public function __construct()
     {
-        $this->table = config('elastic.migrations.database.table');
-        $this->connection = config('elastic.migrations.database.connection');
+        $this->table = config('elastic.migrations.table');
+        $this->connection = config('elastic.migrations.connection');
     }
 
-    public function insert(string $fileName, int $batchNumber): bool
+    public function insert(string $fileName, int $batch): bool
     {
         return $this->table()->insert([
             'migration' => $fileName,
-            'batch' => $batchNumber,
+            'batch' => $batch,
         ]);
     }
 
@@ -42,12 +48,20 @@ class MigrationRepository implements ReadinessInterface
             ->delete();
     }
 
-    public function purge(): void
+    public function deleteAll(): void
     {
         $this->table()->delete();
     }
 
-    public function lastBatchNumber(): ?int
+    /**
+     * @deprecated
+     */
+    public function truncate(): void
+    {
+        $this->table()->truncate();
+    }
+
+    public function getLastBatchNumber(): ?int
     {
         /** @var stdClass|null $record */
         $record = $this->table()
@@ -58,28 +72,28 @@ class MigrationRepository implements ReadinessInterface
         return isset($record) ? (int)$record->batch : null;
     }
 
-    public function lastBatch(): Collection
+    public function getLastBatch(): Collection
     {
         return $this->table()
-            ->where('batch', $this->lastBatchNumber())
+            ->where('batch', $this->getLastBatchNumber())
             ->orderBy('migration', 'desc')
             ->pluck('migration');
     }
 
-    public function all(): Collection
+    public function getAll(): Collection
     {
         return $this->table()
             ->orderBy('migration', 'desc')
             ->pluck('migration');
-    }
-
-    public function isReady(): bool
-    {
-        return Schema::connection($this->connection)->hasTable($this->table);
     }
 
     private function table(): Builder
     {
         return DB::connection($this->connection)->table($this->table);
+    }
+
+    public function isReady(): bool
+    {
+        return Schema::connection($this->connection)->hasTable($this->table);
     }
 }

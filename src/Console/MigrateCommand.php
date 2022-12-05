@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Console;
+namespace ElasticMigrations\Console;
 
-use Elastic\Migrations\Migrator;
+use ElasticMigrations\Migrator;
 use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 
@@ -14,12 +14,12 @@ class MigrateCommand extends Command
      * @var string
      */
     protected $signature = 'elastic:migrate 
-        {name? : Name of the migration or a full path to the existing migration file.}
-        {--force : Force the operation to run when in production.}';
+        {fileName? : The name of the migration file} 
+        {--force : Force the operation to run when in production}';
     /**
      * @var string
      */
-    protected $description = 'Run the migrations.';
+    protected $description = 'Run the migrations';
 
     public function handle(Migrator $migrator): int
     {
@@ -29,11 +29,8 @@ class MigrateCommand extends Command
             return 1;
         }
 
-        /** @var ?string $name */
-        $name = $this->argument('name');
-
-        if (isset($name)) {
-            $migrator->migrateOne(trim($name));
+        if ($fileName = $this->argument('fileName')) {
+            $migrator->migrateOne($fileName);
         } else {
             $migrator->migrateAll();
         }

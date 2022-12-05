@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Console;
+namespace ElasticMigrations\Console;
 
-use Elastic\Migrations\Migrator;
+use ElasticMigrations\Migrator;
 use Illuminate\Console\Command;
 
 class StatusCommand extends Command
@@ -14,7 +14,7 @@ class StatusCommand extends Command
     /**
      * @var string
      */
-    protected $description = 'Show the status of each migration.';
+    protected $description = 'Show the status of each migration';
 
     public function handle(Migrator $migrator): int
     {

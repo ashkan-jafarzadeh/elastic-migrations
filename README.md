@@ -33,9 +33,9 @@ Elastic Migrations for Laravel allow you to easily modify and share indices sche
 
 The current version of Elastic Migrations has been tested with the following configuration:
 
-* PHP 7.4-8.0
-* Elasticsearch 8.x
-* Laravel 6.x-9.x
+* PHP 7.3-8.0
+* Elasticsearch 7.x
+* Laravel 6.x-8.x
 
 ## Installation
 
@@ -49,46 +49,29 @@ If you want to use Elastic Migrations with [Lumen framework](https://lumen.larav
 
 ## Configuration
 
-Elastic Migrations uses [babenkoivan/elastic-client](https://github.com/babenkoivan/elastic-client) as a dependency.
-To change the client settings you need to publish the configuration file first:
+Elastic Migrations uses [babenkoivan/elastic-client](https://github.com/babenkoivan/elastic-client) as a dependency. 
+If you want to change the default client settings (and I'm pretty sure you do), then you need to create the configuration file first:
 
 ```bash
-php artisan vendor:publish --provider="Elastic\Client\ServiceProvider"
+php artisan vendor:publish --provider="ElasticClient\ServiceProvider"
 ```
 
-In the newly created `config/elastic.client.php` file you can define the default connection name and describe multiple
-connections using configuration hashes. Please, refer to the [elastic-client documentation](https://github.com/babenkoivan/elastic-client) for more details.
+You can change Elasticsearch host and other client settings in the `config/elastic.client.php` file. Please refer to 
+[babenkoivan/elastic-client](https://github.com/babenkoivan/elastic-client) for more details.
 
-It is recommended to publish Elastic Migrations settings as well:
+You can also publish Elastic Migrations settings:
 
 ```bash
-php artisan vendor:publish --provider="Elastic\Migrations\ServiceProvider"
+php artisan vendor:publish --provider="ElasticMigrations\ServiceProvider"
 ```
 
 This will create the `config/elastic.migrations.php` file, which allows you to configure the following options:
 
-* `storage.default_path` - the default location of your migration files
-* `database.table` - the table name that holds executed migration names
-* `database.connection` - the database connection you wish to use
-* `prefixes.index` - the prefix of your indices
-* `prefixes.alias` - the prefix of your aliases
-
-If you store some migration files outside the default path and want them to be visible by the package, you may use 
-`registerPaths` method to inform Elastic Migrations how to load them:
-
-```php
-class MyAppServiceProvider extends Illuminate\Support\ServiceProvider
-{
-    public function boot()
-    {
-        resolve(MigrationStorage::class)->registerPaths([
-            '/my_app/elastic/migrations1',
-            '/my_app/elastic/migrations2',
-        ]);
-    }
-}
-```
-
+* `table` - the migration table name
+* `connection` - the database connection
+* `storage_directory` - the migrations directory
+* `index_name_prefix` - the indices prefix
+* `alias_name_prefix` - the aliases prefix
 
 Finally, don't forget to run Laravel database migrations to create Elastic Migrations table:
 
@@ -101,17 +84,14 @@ php artisan migrate
 You can effortlessly create a new migration file using an Artisan console command:
 
 ```bash
-// create a migration file with "create_my_index.php" name in the default directory
 php artisan elastic:make:migration create_my_index
-
-// create a migration file with "create_my_index.php" name in "/my_path" directory 
-// note, that you need to specify the full path to the file in this case
-php artisan elastic:make:migration /my_path/create_my_index.php
 ```
 
-Every migration has two methods: `up` and `down`. `up` is used to alternate the index schema and `down` is used to revert that action.
+This command creates a migration class in the `elastic/migrations` directory. 
 
-You can use `Elastic\Migrations\Facades\Index` facade to perform basic operations over Elasticsearch indices:
+Every migration includes two methods: `up` and `down`. `up` is used to alternate the index schema and `down` is used to revert that action.
+
+You can use `ElasticMigrations\Facades\Index` facade to perform basic operations over Elasticsearch indices:
 
 #### Create Index
 
@@ -283,14 +263,7 @@ Index::dropIfExists('my-index');
 You can create an alias with optional filter query:
 
 ```php
-Index::putAlias('my-index', 'my-alias', [
-    'is_write_index' => true,
-    'filter' => [
-        'term' => [
-            'user_id' => 1,
-        ],
-    ],
-]);
+Index::putAlias('my-index', 'my-alias', ['term' => ['user_id' => 1]]);
 ```
 
 #### Delete Alias
@@ -301,18 +274,9 @@ You can delete an alias by its name:
 Index::deleteAlias('my-index', 'my-alias');
 ```
 
-#### Multiple Connections
-
-You can configure multiple connections to Elasticsearch in the [client's configuration file](https://github.com/babenkoivan/elastic-client/tree/master#configuration),
-and then use a different connection for every operation:
-
-```php
-Index::connection('my-connection')->drop('my-index');
-```
-
 #### More
 
-Finally, you are free to inject `Elastic\Elasticsearch\Client` in the migration constructor and execute any supported by client actions.
+Finally, you are free to inject `Elasticsearch\Client` in the migration constructor and execute any supported by client actions.
 
 ## Running Migrations
 
@@ -325,12 +289,7 @@ php artisan elastic:migrate
 or run a specific one:
 
 ```bash
-// execute a migration located in one of the registered paths
 php artisan elastic:migrate 2018_12_01_081000_create_my_index
-
-// execute a migration located in "/my_path" directory
-// note, that you need to specify the full path to the file in this case
-php artisan elastic:migrate /my_path/2018_12_01_081000_create_my_index.php
 ```
 
 Use the `--force` option if you want to execute migrations on production environment:
@@ -350,12 +309,7 @@ php artisan elastic:migrate:rollback
 or rollback a specific one:
 
 ```bash
-// rollback a migration located in one of the registered paths
 php artisan elastic:migrate:rollback 2018_12_01_081000_create_my_index
-
-// rollback a migration located in "/my_path" directory
-// note, that you need to specify the full path to the file in this case
-php artisan elastic:migrate:rollback /my_path/2018_12_01_081000_create_my_index
 ```
 
 Use the `elastic:migrate:reset` command if you want to revert all previously migrated files:
@@ -402,5 +356,5 @@ create `migrations` directory manually
 In case one of the commands doesn't work as expected, try to publish configuration:
 
 ```bash
-php artisan vendor:publish --provider="Elastic\Migrations\ServiceProvider"
+php artisan vendor:publish --provider="ElasticMigrations\ServiceProvider"
 ```

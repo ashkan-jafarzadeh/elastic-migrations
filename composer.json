@@ -1,5 +1,5 @@
 {
-    "name": "babenkoivan/elastic-migrations",
+    "name": "ashkan-jafarzadeh/elastic-migrations",
     "description": "Elasticsearch migrations for Laravel",
     "keywords": [
         "laravel",
@@ -14,6 +14,10 @@
         {
             "name": "Ivan Babenko",
             "email": "babenko.i.a@gmail.com"
+        },
+        {
+            "name": "Ashkan Jafarzadeh",
+            "email": "ashkan.jafarzade.dev@gmail.com"
         }
     ],
     "funding": [
@@ -28,7 +32,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Elastic\\Migrations\\": "src"
+            "ElasticMigrations\\": "src"
         },
         "files": [
             "src/helpers.php"
@@ -36,19 +40,19 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Elastic\\Migrations\\Tests\\": "tests"
+            "ElasticMigrations\\Tests\\": "tests"
         }
     },
     "require": {
-        "php": "^7.4 || ^8.0",
-        "babenkoivan/elastic-adapter": "^3.0"
+        "php": "^7.3 || ^8.0",
+        "babenkoivan/elastic-client": "^1.2",
+        "babenkoivan/elastic-adapter": "^2.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
-        "orchestra/testbench": "^7.5",
-        "friendsofphp/php-cs-fixer": "^3.8",
-        "phpstan/phpstan": "^1.6",
-        "dg/bypass-finals": "^1.3"
+        "orchestra/testbench": "^6.12",
+        "friendsofphp/php-cs-fixer": "^3.0",
+        "phpstan/phpstan": "^0.12.32"
     },
     "config": {
         "bin-dir": "bin"
@@ -56,7 +60,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Elastic\\Migrations\\ServiceProvider"
+                "ElasticMigrations\\ServiceProvider"
             ]
         }
     }

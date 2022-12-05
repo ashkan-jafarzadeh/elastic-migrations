@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Console;
+namespace ElasticMigrations\Console;
 
-use Elastic\Migrations\Migrator;
+use ElasticMigrations\Migrator;
 use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 
@@ -14,11 +14,11 @@ class RefreshCommand extends Command
      * @var string
      */
     protected $signature = 'elastic:migrate:refresh 
-        {--force : Force the operation to run when in production.}';
+        {--force : Force the operation to run when in production}';
     /**
      * @var string
      */
-    protected $description = 'Reset and re-run all migrations.';
+    protected $description = 'Reset and re-run all migrations';
 
     public function handle(Migrator $migrator): int
     {

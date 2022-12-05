@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Tests\Integration\Console;
+namespace ElasticMigrations\Tests\Integration\Console;
 
-use Elastic\Migrations\Console\MakeCommand;
-use Elastic\Migrations\Filesystem\MigrationStorage;
-use Elastic\Migrations\Tests\Integration\TestCase;
+use ElasticMigrations\Console\MakeCommand;
+use ElasticMigrations\Filesystem\MigrationStorage;
+use ElasticMigrations\Tests\Integration\TestCase;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 /**
- * @covers \Elastic\Migrations\Console\MakeCommand
+ * @covers \ElasticMigrations\Console\MakeCommand
  */
 final class MakeCommandTest extends TestCase
 {
@@ -22,25 +22,27 @@ final class MakeCommandTest extends TestCase
         $migrationStub = file_get_contents(dirname(__DIR__, 3) . '/src/Console/stubs/migration.blank.stub');
 
         $migrationStorageMock
-            ->expects($this->once())
-            ->method('create')
-            ->with(
-                $this->stringEndsWith('_test_migration_creation'),
-                str_replace('DummyClass', 'TestMigrationCreation', $migrationStub)
-            );
+             ->expects($this->once())
+             ->method('create')
+             ->with(
+                  $this->stringEndsWith('_test_migration_index'),
+                  str_replace('DummyClass', 'CreateTestMigrationIndex',
+                       str_replace('Table', 'test_migration', $migrationStub)),
+             )
+        ;
 
         $command = new MakeCommand();
         $command->setLaravel($this->app);
 
-        $input = new ArrayInput(['name' => 'test_migration_creation']);
+        $input  = new ArrayInput(['name' => 'create_test_migration_index']);
         $output = new BufferedOutput();
 
-        $resultCode = $command->run($input, $output);
+        $resultCode    = $command->run($input, $output);
         $resultMessage = $output->fetch();
 
         $this->assertSame(0, $resultCode);
 
         $this->assertStringContainsString('Created migration', $resultMessage);
-        $this->assertStringContainsString('_test_migration_creation', $resultMessage);
+        $this->assertStringContainsString('_test_migration_index', $resultMessage);
     }
 }

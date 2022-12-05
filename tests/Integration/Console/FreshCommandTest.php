@@ -1,25 +1,37 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\Migrations\Tests\Integration\Console;
+namespace ElasticMigrations\Tests\Integration\Console;
 
-use Elastic\Migrations\Console\FreshCommand;
-use Elastic\Migrations\IndexManagerInterface;
-use Elastic\Migrations\Migrator;
-use Elastic\Migrations\Repositories\MigrationRepository;
-use Elastic\Migrations\Tests\Integration\TestCase;
+use ElasticMigrations\Console\FreshCommand;
+use ElasticMigrations\IndexManagerInterface;
+use ElasticMigrations\Migrator;
+use ElasticMigrations\Repositories\MigrationRepository;
+use ElasticMigrations\Tests\Integration\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 
 /**
- * @covers \Elastic\Migrations\Console\FreshCommand
+ * @covers \ElasticMigrations\Console\FreshCommand
  */
 final class FreshCommandTest extends TestCase
 {
-    private MockObject $migrator;
-    private MockObject $migrationRepository;
-    private MockObject $indexManager;
-    private FreshCommand $command;
+    /**
+     * @var MockObject
+     */
+    private $migrator;
+    /**
+     * @var MockObject
+     */
+    private $migrationRepository;
+    /**
+     * @var MockObject
+     */
+    private $indexManager;
+    /**
+     * @var FreshCommand
+     */
+    private $command;
 
     protected function setUp(): void
     {
@@ -51,7 +63,7 @@ final class FreshCommandTest extends TestCase
 
         $this->migrationRepository
             ->expects($this->never())
-            ->method('purge');
+            ->method('deleteAll');
 
         $this->migrator
             ->expects($this->never())
@@ -65,7 +77,7 @@ final class FreshCommandTest extends TestCase
         $this->assertSame(1, $result);
     }
 
-    public function test_drops_indices_and_migration(): void
+    public function test_drops_indicies_and_migration(): void
     {
         $this->migrator
             ->expects($this->once())
@@ -79,7 +91,7 @@ final class FreshCommandTest extends TestCase
 
         $this->migrationRepository
             ->expects($this->once())
-            ->method('purge');
+            ->method('deleteAll');
 
         $this->migrator
             ->expects($this->once())
